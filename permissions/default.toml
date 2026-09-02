@@ -1,0 +1,18 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = """
+Default permissions for the mpv plugin. Allows creating and controlling an mpv
+render surface, and positioning it beneath the webview.
+"""
+permissions = [
+    "allow-init",
+    "allow-destroy",
+    "allow-command",
+    "allow-set-property",
+    "allow-get-property",
+    "allow-observe-property",
+    "allow-unobserve-property",
+    "allow-set-video-rect",
+    "allow-set-surface-visible",
+]

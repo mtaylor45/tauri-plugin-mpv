@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tauri-plugin-mpv — basic player</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "@tauri-apps/api/core": "./shims/core.js",
+          "@tauri-apps/api/event": "./shims/event.js",
+          "@tauri-apps/api/webviewWindow": "./shims/webviewWindow.js"
+        }
+      }
+    </script>
+    <style>
+      /* The webview is transparent, so the page paints only its own chrome. Anywhere it does
+         not paint, whatever is behind it shows through — which is exactly where the video is. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        font: 13px/1.4 system-ui, sans-serif;
+        color: #e8e8ec;
+        overflow: hidden;
+      }
+
+      /* The video surface tracks this element's rect. It must stay unpainted. */
+      #video {
+        position: absolute;
+        left: 100px;
+        top: 80px;
+        width: 400px;
+        height: 300px;
+        background: transparent;
+      }
+
+      /* Proof that HTML composites *over* live video: an opaque badge inside the video rect. */
+      #badge {
+        position: absolute;
+        left: 120px;
+        top: 100px;
+        width: 60px;
+        height: 40px;
+        background: #00c853;
+        border-radius: 4px;
+      }
+
+      #bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: #14141a;
+        border-top: 1px solid #2a2a35;
+      }
+
+      button {
+        background: #2a2a35;
+        color: #e8e8ec;
+        border: 1px solid #3a3a48;
+        border-radius: 4px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+
+      #status {
+        margin-left: auto;
+        font-variant-numeric: tabular-nums;
+        color: #9a9aa8;
+      }
+
+      #error {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        right: 16px;
+        padding: 10px 12px;
+        border-radius: 4px;
+        background: #4a1420;
+        border: 1px solid #7a2436;
+        display: none;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="video"></div>
+    <div id="badge"></div>
+    <div id="error"></div>
+    <div id="bar">
+      <button id="play">Play</button>
+      <button id="pause">Pause</button>
+      <button id="back">-10s</button>
+      <button id="fwd">+10s</button>
+      <span id="status">idle</span>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

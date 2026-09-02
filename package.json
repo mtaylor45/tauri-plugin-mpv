@@ -1,0 +1,36 @@
+{
+  "name": "tauri-plugin-mpv-api",
+  "version": "0.1.0",
+  "description": "Composite a real mpv video surface beneath a transparent Tauri webview",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "types": "./dist-js/index.d.ts",
+  "main": "./dist-js/index.cjs",
+  "module": "./dist-js/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist-js/index.d.ts",
+      "import": "./dist-js/index.js",
+      "require": "./dist-js/index.cjs"
+    }
+  },
+  "files": [
+    "dist-js",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12",
+    "rollup": "^4",
+    "tslib": "^2",
+    "typescript": "^5",
+    "vitest": "^2"
+  }
+}

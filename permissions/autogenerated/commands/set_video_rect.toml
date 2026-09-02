@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-set-video-rect"
+description = "Enables the set_video_rect command without any pre-configured scope."
+commands.allow = ["set_video_rect"]
+
+[[permission]]
+identifier = "deny-set-video-rect"
+description = "Denies the set_video_rect command without any pre-configured scope."
+commands.deny = ["set_video_rect"]

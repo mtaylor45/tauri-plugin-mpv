@@ -32,6 +32,17 @@ jobs:
 
       - run: cargo build --lib
 
+      # macos-latest is Apple Silicon, so it only ever compiles the arm64 side of the
+      # architecture-specific Objective-C dispatch in src/surface/macos.rs. Checking the Intel
+      # target from the same runner keeps the x86_64 branch honest without depending on an
+      # Intel runner image, which GitHub has been retiring. The macOS SDK is universal, so this
+      # needs nothing beyond the extra rustup target.
+      - name: Check the Intel macOS target
+        if: runner.os == 'macOS'
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo check --lib --target x86_64-apple-darwin
+
   lint:
     runs-on: ubuntu-22.04
     steps:

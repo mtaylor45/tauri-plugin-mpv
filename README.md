@@ -47,7 +47,7 @@ instead of a rewrite of your playback layer.
 |---|---|---|
 | **Linux** (X11 + Wayland) | ✅ **Verified** | `GtkGLArea` inside a `GtkOverlay`, below the WebKit webview. A headless pixel test verifies compositing order, geometry, colour and vertical orientation end-to-end. |
 | **Windows** | ⚠️ **UNVERIFIED — needs testing on real hardware** | Child `HWND` with a WGL context, z-ordered beneath WebView2. Compile-checked for `x86_64-pc-windows-gnu` and in CI, but **never run**. |
-| **macOS** | ⚠️ **UNVERIFIED — needs testing on real hardware** | `NSOpenGLContext`-backed `NSView` inserted below the `WKWebView`. Compiled in CI only, **never run**. |
+| **macOS** | ⚠️ **UNVERIFIED — needs testing on real hardware** | `NSOpenGLContext`-backed `NSView` inserted below the `WKWebView`. Compiled in CI for arm64 and x86_64, **never run**. Please test on both architectures: the Objective-C struct-return ABI differs between them. |
 
 Be blunt about what that means: only the Linux backend has been executed. Windows and macOS are
 carefully written and type-checked, and that is all. Reports and fixes very welcome.

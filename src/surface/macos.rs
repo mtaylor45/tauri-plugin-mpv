@@ -1,8 +1,9 @@
 //! macOS surface: an `NSOpenGLContext`-backed `NSView` inserted below the `WKWebView`.
 //!
-//! **UNVERIFIED.** This backend has never been compiled or run — this repository's CI compiles it
-//! on a macOS runner, but nothing here has been exercised on real hardware. Treat it as a
-//! starting point, not a supported platform. See the platform table in the README.
+//! **UNVERIFIED.** This backend has never been run. CI compiles it for both arm64 and x86_64, so
+//! the architecture-specific dispatch below is at least type-checked on both, but nothing here
+//! has been exercised on real hardware. Treat it as a starting point, not a supported platform.
+//! See the platform table in the README.
 //!
 //! Two deliberate choices:
 //!
@@ -40,6 +41,10 @@ extern "C" {
     fn objc_getClass(name: *const c_char) -> Id;
     fn sel_registerName(name: *const c_char) -> Sel;
     fn objc_msgSend();
+    /// x86_64 only. Apple's arm64 runtime does not export this symbol at all, so referencing it
+    /// unconditionally would fail to link on Apple Silicon.
+    #[cfg(target_arch = "x86_64")]
+    fn objc_msgSend_stret();
 }
 
 #[repr(C)]
@@ -63,6 +68,10 @@ struct NSRect {
     size: NSSize,
 }
 
+// The whole reason `msg_stret!` exists: 32 bytes is over the 16-byte threshold at which the
+// System V ABI switches to returning through a hidden pointer.
+const _: () = assert!(std::mem::size_of::<NSRect>() == 32);
+
 fn class(name: &str) -> Id {
     let c = CString::new(name).expect("class name has no NUL");
     unsafe { objc_getClass(c.as_ptr()) }
@@ -75,10 +84,48 @@ fn sel(name: &str) -> Sel {
 
 /// `objc_msgSend` is variadic in the headers but must be called through a correctly typed
 /// pointer; each helper below casts it to the exact signature of the message it sends.
+///
+/// **Do not use this for a return type larger than 16 bytes** — see `msg_stret!`. Struct
+/// *arguments* passed by value are fine here on both architectures; it is only the return path
+/// that differs.
 macro_rules! msg {
     ($ret:ty $(, $arg:ty)* ; $obj:expr, $sel:expr $(, $a:expr)*) => {{
         let f: unsafe extern "C" fn(Id, Sel $(, $arg)*) -> $ret =
             unsafe { std::mem::transmute(objc_msgSend as *const ()) };
+        unsafe { f($obj, $sel $(, $a)*) }
+    }};
+}
+
+/// Send a message that returns a struct too large to come back in registers (`NSRect`, 32 bytes).
+///
+/// The two architectures disagree, and getting it wrong is silent:
+///
+/// * **x86_64** — the System V ABI classes anything over 16 bytes as MEMORY, returning it through
+///   a hidden pointer, and the Objective-C runtime requires `objc_msgSend_stret` for exactly that
+///   case. Plain `objc_msgSend` does not implement the sret convention, so calling it through a
+///   struct-returning signature reads back garbage geometry.
+/// * **arm64** — an `NSRect` is a homogeneous floating-point aggregate returned in `v0`–`v3`, so
+///   there is no sret and Apple ships no `objc_msgSend_stret`. Plain `objc_msgSend` is correct.
+///
+/// Note that CI's `macos-latest` runner is Apple Silicon and therefore only ever compiles the
+/// second branch natively; the workflow also runs `cargo check --target x86_64-apple-darwin` on
+/// that runner, which is what keeps the first branch honest.
+macro_rules! msg_stret {
+    ($ret:ty $(, $arg:ty)* ; $obj:expr, $sel:expr $(, $a:expr)*) => {{
+        // Rust emits the sret calling convention for a large struct return, which is precisely
+        // what objc_msgSend_stret expects: buffer pointer first, then self and _cmd.
+        #[cfg(target_arch = "x86_64")]
+        let send = objc_msgSend_stret as *const ();
+        #[cfg(not(target_arch = "x86_64"))]
+        let send = objc_msgSend as *const ();
+
+        const _: () = assert!(
+            std::mem::size_of::<$ret>() > 16,
+            "msg_stret! is for large struct returns; use msg! for anything returned in registers",
+        );
+
+        let f: unsafe extern "C" fn(Id, Sel $(, $arg)*) -> $ret =
+            unsafe { std::mem::transmute(send) };
         unsafe { f($obj, $sel $(, $a)*) }
     }};
 }
@@ -166,9 +213,9 @@ extern "C" fn tick(context: *mut c_void) {
             return true;
         }
 
-        let bounds: NSRect = msg!(NSRect; surface.view, sel("bounds"));
+        let bounds: NSRect = msg_stret!(NSRect; surface.view, sel("bounds"));
         let backing: NSRect =
-            msg!(NSRect, NSRect; surface.view, sel("convertRectToBacking:"), bounds);
+            msg_stret!(NSRect, NSRect; surface.view, sel("convertRectToBacking:"), bounds);
         let (w, h) = (backing.size.width as i32, backing.size.height as i32);
         if w <= 0 || h <= 0 {
             return true;
@@ -353,7 +400,7 @@ pub fn set_geometry(label: &str, rect: VideoRect) -> Result<()> {
             return Ok(());
         }
 
-        let content_bounds: NSRect = msg!(NSRect; surface.content_view, sel("bounds"));
+        let content_bounds: NSRect = msg_stret!(NSRect; surface.content_view, sel("bounds"));
         let frame = NSRect {
             origin: NSPoint {
                 x: rect.x,

@@ -250,4 +250,4 @@ renaming those two things along with the import; the JS API deliberately keeps t
 
 ## License
 
-MIT OR Apache-2.0
+MIT

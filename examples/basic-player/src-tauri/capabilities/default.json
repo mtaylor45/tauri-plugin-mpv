@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Permissions for the basic player example",
   "windows": ["main"],
-  "permissions": ["core:default", "mpv:default"]
+  "permissions": ["core:default", "mpv-surface:default"]
 }

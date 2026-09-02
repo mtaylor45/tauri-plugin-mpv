@@ -39,7 +39,7 @@ pub enum Error {
     #[error("failed to initialize the mpv render context: {0}")]
     RenderInit(String),
 
-    #[error("this platform is not supported by tauri-plugin-mpv")]
+    #[error("this platform is not supported by tauri-plugin-mpv-surface")]
     UnsupportedPlatform,
 
     #[error("property `{name}` holds a value this plugin cannot represent as JSON (mpv format {format})")]

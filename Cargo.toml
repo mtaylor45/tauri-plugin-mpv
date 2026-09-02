@@ -2,21 +2,18 @@
 members = ["examples/basic-player/src-tauri"]
 
 [package]
-name = "tauri-plugin-mpv"
+name = "tauri-plugin-mpv-surface"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.77.2"
 description = "Composite a real mpv video surface beneath a transparent Tauri webview"
-authors = ["tauri-plugin-mpv contributors"]
+authors = ["tauri-plugin-mpv-surface contributors"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/mtaylor45/tauri-plugin-mpv"
 readme = "README.md"
 keywords = ["tauri", "plugin", "mpv", "video", "player"]
 categories = ["gui", "multimedia"]
-links = "tauri-plugin-mpv"
-# TODO(publish-name): `tauri-plugin-mpv` is taken on crates.io by nini22P.
-# Settle the published name before the first release, then drop `publish = false`.
-publish = false
+links = "tauri-plugin-mpv-surface"
 
 [dependencies]
 tauri = "2"

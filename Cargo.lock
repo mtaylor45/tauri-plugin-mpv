@@ -1835,7 +1835,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
- "tauri-plugin-mpv",
+ "tauri-plugin-mpv-surface",
 ]
 
 [[package]]
@@ -3201,7 +3201,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-mpv"
+name = "tauri-plugin-mpv-surface"
 version = "0.1.0"
 dependencies = [
  "glib",

@@ -1,5 +1,5 @@
 {
-  "name": "tauri-plugin-mpv-api",
+  "name": "tauri-plugin-mpv-surface-api",
   "version": "0.1.0",
   "description": "Composite a real mpv video surface beneath a transparent Tauri webview",
   "license": "MIT OR Apache-2.0",
@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "build": "rollup -c",
+    "prepack": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

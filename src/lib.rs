@@ -1,4 +1,4 @@
-//! # tauri-plugin-mpv
+//! # tauri-plugin-mpv-surface
 //!
 //! Composites a real mpv video surface *beneath* a transparent Tauri webview, so your HTML UI
 //! draws over live video with alpha.
@@ -29,11 +29,11 @@ use tauri::{
 };
 
 /// Event name the plugin emits mpv events under.
-pub const EVENT_NAME: &str = "mpv:event";
+pub const EVENT_NAME: &str = "mpv-surface:event";
 
 /// Initialize the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-    Builder::new("mpv")
+    Builder::new("mpv-surface")
         .invoke_handler(tauri::generate_handler![
             commands::init,
             commands::destroy,

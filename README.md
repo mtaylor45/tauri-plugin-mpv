@@ -1,10 +1,10 @@
-# tauri-plugin-mpv
+# tauri-plugin-mpv-surface
 
 Composite a real **mpv** video surface *beneath* a transparent Tauri v2 webview, so your HTML UI
 draws over live, hardware-decoded video with alpha.
 
 ```ts
-import { MpvVideo } from 'tauri-plugin-mpv-api'
+import { MpvVideo } from 'tauri-plugin-mpv-surface-api'
 
 // Looks and behaves like an <video> element.
 const video = await MpvVideo.create({ target: document.getElementById('player') })
@@ -65,19 +65,19 @@ Set `TAURI_PLUGIN_MPV_LIBMPV_PATH` to point at a specific library if auto-discov
 ## Install
 
 ```bash
-cargo add tauri-plugin-mpv     # see "Naming" below
-npm install tauri-plugin-mpv-api
+cargo add tauri-plugin-mpv-surface
+npm install tauri-plugin-mpv-surface-api
 ```
 
 ```rust
 tauri::Builder::default()
-    .plugin(tauri_plugin_mpv::init())
+    .plugin(tauri_plugin_mpv_surface::init())
 ```
 
 Add the permission to your capability file:
 
 ```json
-{ "permissions": ["mpv:default"] }
+{ "permissions": ["mpv-surface:default"] }
 ```
 
 ### Window transparency
@@ -123,7 +123,7 @@ your chrome — control bars, panels — explicitly.
 Everything mpv can do that `<video>` has no vocabulary for:
 
 ```ts
-import { command, setProperty, getProperty, observeProperty, onMpvEvent } from 'tauri-plugin-mpv-api'
+import { command, setProperty, getProperty, observeProperty, onMpvEvent } from 'tauri-plugin-mpv-surface-api'
 
 await command(['loadfile', url, 'replace'])
 await setProperty('sub-visibility', false)
@@ -192,8 +192,15 @@ webview paints, that the video surface occupies the requested rect, that an HTML
 
 ## Naming
 
-`tauri-plugin-mpv` and `tauri-plugin-libmpv` are both taken on crates.io. This crate is
-`publish = false` until a published name is settled; see the `TODO(publish-name)` in `Cargo.toml`.
+Published as **`tauri-plugin-mpv-surface`** (npm: `tauri-plugin-mpv-surface-api`), because
+`tauri-plugin-mpv` and `tauri-plugin-libmpv` are both taken on crates.io by the plugins this one
+is an alternative to. The suffix names the difference: a real compositing surface behind the
+webview rather than an embedded mpv window.
+
+The Tauri plugin identifier is `mpv-surface` to match, so permissions read `mpv-surface:default`
+and commands are invoked as `plugin:mpv-surface|…`. **Migrating from `tauri-plugin-mpv`** means
+renaming those two things along with the import; the JS API deliberately keeps the same
+`command` / `setProperty` / `getProperty` / `observeProperty` vocabulary.
 
 ## License
 

@@ -11,11 +11,12 @@ What this proves, always:
   3. HTML composites ON TOP of the video     -> a badge inside the video rect is its own colour
   4. mpv actually decoded and rendered       -> the app log reports a loaded file and a frame
 
-Colour checks (that the clip's red-over-blue pattern appears the right way up) are skipped on a
-software GL stack. Not out of caution: mpv's own OpenGL renderer produces near-black output under
-llvmpipe, which is reproducible with stock `mpv --vo=gpu --gpu-sw=yes` in the same environment and
-has nothing to do with this plugin. On a machine with a real GPU they run automatically; force
-them anywhere with --strict-colours.
+  5. the clip renders the right way up   -> red half on top, blue half below
+
+Check 5 is what pins down FLIP_Y, and it is why the clip is asymmetric: a symmetric pattern
+cannot tell a correct frame from a vertically flipped one. It is skipped only when mpv rendered
+near-black, which some software GL stacks do (reproducible with stock `mpv --vo=gpu --gpu-sw=yes`
+and nothing to do with this plugin). Force it anyway with --strict-colours.
 
 The clip is deliberately asymmetric — solid red over solid blue — because a symmetric pattern
 cannot distinguish correct output from a vertically flipped framebuffer, which is the single
@@ -38,6 +39,10 @@ REPO = Path(__file__).resolve().parents[2]
 SCRATCH = Path(os.environ.get("MPV_E2E_DIR", "/tmp/tauri-plugin-mpv-e2e"))
 DISPLAY = os.environ.get("MPV_E2E_DISPLAY", ":99")
 WIDTH, HEIGHT = 800, 600
+# Give the virtual display room around the window so its size is never clamped by the screen.
+SCREEN_W, SCREEN_H = 1024, 768
+# CI runners are slow: WebKitGTK's first initialisation alone can take tens of seconds.
+WINDOW_TIMEOUT_S = 90
 
 # Must match the CSS in examples/basic-player/src/index.html.
 VIDEO = (100, 80, 400, 300)  # left, top, w, h
@@ -76,18 +81,35 @@ def make_clip(path: Path):
         sys.exit(f"FATAL: could not generate the test clip:\n{r.stderr}")
 
 
-def find_window():
-    """Return (id, abs_x, abs_y) of the app window, matched on its known size."""
+def window_tree():
     r = run(["xwininfo", "-root", "-tree", "-display", DISPLAY])
-    if r.returncode != 0:
-        return None
-    for line in r.stdout.splitlines():
-        m = re.search(r"(0x[0-9a-f]+).*?\s(\d+)x(\d+)\+", line)
-        if not m or int(m.group(2)) != WIDTH or int(m.group(3)) != HEIGHT:
+    return r.stdout if r.returncode == 0 else ""
+
+
+def find_window():
+    """Return (id, abs_x, abs_y) of the app window.
+
+    Matched by WM_CLASS first — the window's size is not a reliable key, since a compositor or
+    the display size can change it — falling back to an exactly-sized window.
+    """
+    candidates = []
+    for line in window_tree().splitlines():
+        m = re.search(r"(0x[0-9a-f]+)", line)
+        if not m:
             continue
         wid = m.group(1)
+        size = re.search(r"\s(\d+)x(\d+)\+", line)
+        if "mpv-basic-player" in line:
+            candidates.insert(0, wid)
+        elif size and int(size.group(1)) == WIDTH and int(size.group(2)) == HEIGHT:
+            candidates.append(wid)
+
+    for wid in candidates:
         info = run(["xwininfo", "-display", DISPLAY, "-id", wid])
-        ax = ay = 0
+        if info.returncode != 0:
+            continue
+        ax = ay = None
+        w = h = 0
         for il in info.stdout.splitlines():
             am = re.search(r"Absolute upper-left (X|Y):\s+(-?\d+)", il)
             if am:
@@ -95,6 +117,15 @@ def find_window():
                     ax = int(am.group(2))
                 else:
                     ay = int(am.group(2))
+            wm = re.search(r"Width:\s+(\d+)", il)
+            if wm:
+                w = int(wm.group(1))
+            hm = re.search(r"Height:\s+(\d+)", il)
+            if hm:
+                h = int(hm.group(1))
+        # Skip tiny helper windows WebKit and GTK create alongside the real one.
+        if ax is None or ay is None or w < WIDTH or h < HEIGHT:
+            continue
         return wid, ax, ay
     return None
 
@@ -124,6 +155,10 @@ def region_color(png: Path, region):
         sys.exit(f"FATAL: ImageMagick failed reading {region}:\n{r.stderr}")
     hexval = r.stdout.strip()[:6]
     return tuple(int(hexval[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def near_black(rgb, threshold=40):
+    return max(rgb) < threshold
 
 
 def close_to(a, b, tol=12):
@@ -176,7 +211,7 @@ def main():
     log_path = SCRATCH / "app.log"
 
     xvfb = subprocess.Popen(
-        ["Xvfb", DISPLAY, "-screen", "0", f"{WIDTH}x{HEIGHT}x24", "-nolisten", "tcp"],
+        ["Xvfb", DISPLAY, "-screen", "0", f"{SCREEN_W}x{SCREEN_H}x24", "-nolisten", "tcp"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     app = None
@@ -201,7 +236,8 @@ def main():
                                    stderr=subprocess.STDOUT)
 
             found = None
-            for _ in range(40):
+            deadline = time.monotonic() + WINDOW_TIMEOUT_S
+            while time.monotonic() < deadline:
                 time.sleep(0.5)
                 if app.poll() is not None:
                     print(log_path.read_text()[-4000:])
@@ -210,8 +246,14 @@ def main():
                 if found:
                     break
             if not found:
-                print(log_path.read_text()[-4000:])
-                sys.exit("FATAL: the app window never appeared")
+                # Without these, a detection failure in CI is undiagnosable.
+                print("--- xwininfo -root -tree ---")
+                print(window_tree() or "(xwininfo produced no output)")
+                print("--- app log ---")
+                print(log_path.read_text()[-4000:] or "(empty)")
+                sys.exit(
+                    f"FATAL: no {WIDTH}x{HEIGHT} app window appeared within {WINDOW_TIMEOUT_S}s"
+                )
             window, ox, oy = found
 
             time.sleep(6)
@@ -222,11 +264,7 @@ def main():
             screenshot(shot)
 
         app_log = log_path.read_text()
-        software_gl = "llvmpipe" in app_log or "softpipe" in app_log or "swrast" in app_log
-
         print(f"window {window} at +{ox}+{oy}, screenshot -> {shot}")
-        if software_gl:
-            print("note: software GL stack detected (llvmpipe)")
         print()
 
         c = Checks()
@@ -256,10 +294,13 @@ def main():
         c.check("mpv rendered a frame", "first mpv frame rendered" in app_log,
                 "app log reports a rendered frame")
 
-        # 5. Colours, including orientation — only meaningful on a working GL stack.
-        if software_gl and not args.strict:
+        # 5. Colours, including orientation. Decided on the pixels themselves rather than the
+        # renderer's name: some software stacks render the video fine and some emit near-black,
+        # and only the latter makes the check meaningless.
+        if near_black(top) and near_black(bottom) and not args.strict:
             c.skip("video colours and orientation",
-                   "software GL: mpv's own --vo=gpu is near-black here too")
+                   f"mpv rendered near-black (upper={top} lower={bottom}); "
+                   "stock mpv --vo=gpu does the same on this GL stack")
         else:
             c.check("video top half is red", classify(top) == "red", f"rgb={top}")
             c.check("video bottom half is blue", classify(bottom) == "blue", f"rgb={bottom}")

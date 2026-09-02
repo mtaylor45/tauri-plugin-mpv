@@ -45,7 +45,7 @@ instead of a rewrite of your playback layer.
 
 | Platform | Status | Notes |
 |---|---|---|
-| **Linux** (X11 + Wayland) | ✅ **Verified** | `GtkGLArea` inside a `GtkOverlay`, below the WebKit webview. Compositing verified end-to-end by a pixel test on a headless X server. |
+| **Linux** (X11 + Wayland) | ✅ **Verified** | `GtkGLArea` inside a `GtkOverlay`, below the WebKit webview. A headless pixel test verifies compositing order, geometry, colour and vertical orientation end-to-end. |
 | **Windows** | ⚠️ **UNVERIFIED — needs testing on real hardware** | Child `HWND` with a WGL context, z-ordered beneath WebView2. Compile-checked for `x86_64-pc-windows-gnu` and in CI, but **never run**. |
 | **macOS** | ⚠️ **UNVERIFIED — needs testing on real hardware** | `NSOpenGLContext`-backed `NSView` inserted below the `WKWebView`. Compiled in CI only, **never run**. |
 
@@ -146,10 +146,16 @@ await MpvVideo.create({
 
 `vo` is ignored — the render API requires `vo=libmpv`.
 
-`flipY` defaults to `false` on every platform, which follows from each toolkit's framebuffer
-convention but has **not** been confirmed on screen — the only GL stack available during
-development renders mpv near-black, so orientation could not be observed. If video appears upside
-down, set `flipY: true` and please open an issue.
+`flipY` defaults to `true` on Linux and `false` on Windows and macOS.
+
+The Linux value is **verified on screen**: `GtkGLArea` hands mpv a framebuffer whose rows run
+opposite to mpv's default expectation, so without the flip the frame arrives upside down. The e2e
+test plays a red-over-blue clip and asserts which half ends up where, because a symmetric test
+pattern cannot tell a correct frame from a flipped one.
+
+Windows and macOS render into the window's own default framebuffer rather than an offscreen FBO,
+where OpenGL's bottom-left origin already matches mpv — so `false`. That is reasoned, not
+observed. If video appears upside down there, set `flipY: true` and please open an issue.
 
 ## How it works
 
@@ -180,9 +186,9 @@ python3 tests/e2e/verify_linux.py     # headless compositing proof (Linux)
 ```
 
 `tests/e2e/verify_linux.py` runs the example app under Xvfb and asserts on real pixels: that the
-webview paints, that the video surface occupies the requested rect, and that an HTML badge
-composites *over* the video. See [`tests/e2e/README.md`](tests/e2e/README.md) for what it can and
-cannot prove headlessly.
+webview paints, that the video surface occupies the requested rect, that an HTML badge composites
+*over* the video, and that a red-over-blue clip comes out the right way up. See
+[`tests/e2e/README.md`](tests/e2e/README.md).
 
 ## Naming
 

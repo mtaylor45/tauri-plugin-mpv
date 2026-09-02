@@ -39,17 +39,17 @@ fn on_main_thread<R: Runtime, T: Send + 'static>(
 
 /// Platform default for the framebuffer's vertical orientation.
 ///
-/// Every backend here draws into a framebuffer using OpenGL's own convention (origin at the
-/// bottom-left), which is what mpv assumes when `FLIP_Y` is unset — so the default is `false`
-/// everywhere.
+/// **Linux: `true`.** `GtkGLArea` hands mpv a framebuffer whose rows run opposite to mpv's
+/// default expectation, so the frame arrives upside down without the flip. This is verified on
+/// screen by `tests/e2e/verify_linux.py`, which plays a red-over-blue clip and asserts which
+/// half is which — a symmetric test pattern could not tell the two apart.
 ///
-/// This is reasoned from the toolkits' documented behaviour, **not** confirmed on screen: the
-/// only GL stack available during development was llvmpipe, where mpv's renderer emits
-/// near-black output (reproducible with stock mpv — see `tests/e2e/README.md`), so orientation
-/// could not be observed. It is the classic thing to get wrong in a render-API integration,
-/// which is exactly why `MpvConfig::flip_y` exists: if video appears upside down, set it.
+/// **Windows and macOS: `false`.** Those backends render into the window's own default
+/// framebuffer rather than an offscreen FBO, so OpenGL's bottom-left origin already matches what
+/// mpv assumes. Reasoned, not observed — neither backend has been run. If video appears upside
+/// down there, `MpvConfig::flip_y` overrides this and the default should be corrected.
 fn default_flip_y() -> bool {
-    false
+    cfg!(target_os = "linux")
 }
 
 #[tauri::command]

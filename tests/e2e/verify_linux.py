@@ -39,6 +39,11 @@ WIDTH, HEIGHT = 800, 600
 SCREEN_W, SCREEN_H = 1024, 768
 # CI runners are slow: WebKitGTK's first initialisation alone can take tens of seconds.
 WINDOW_TIMEOUT_S = 90
+# Longer still, and for a different reason: creating mpv's render context compiles its GLSL, and
+# a software rasteriser can spend the better part of a minute on that. Waiting a fixed interval
+# screenshots a half-initialised app, so wait for mpv to say it drew something instead.
+FRAME_TIMEOUT_S = 120
+FRAME_MARKER = "first mpv frame rendered"
 
 # Must match the CSS in examples/basic-player/src/index.html.
 WINDOW_BG = (246, 245, 244)  # GTK's default window background, i.e. "nothing painted here"
@@ -248,11 +253,21 @@ def attempt(binary, clip, shot, log_path, webkit_env):
                               f"{window_tree() or '(no output)'}\n"
                               f"--- app log ---\n{log_path.read_text()[-4000:] or '(empty)'}")
 
-            # Let mpv open the file and present a frame.
-            time.sleep(6)
-            if app.poll() is not None:
-                return None, (f"the app exited while waiting for a frame ({app.returncode})\n"
-                              f"--- app log ---\n{log_path.read_text()[-4000:]}")
+            # Wait for mpv to report a rendered frame rather than sleeping a fixed interval.
+            deadline = time.monotonic() + FRAME_TIMEOUT_S
+            while time.monotonic() < deadline:
+                if app.poll() is not None:
+                    return None, (f"the app exited while waiting for a frame "
+                                  f"({app.returncode})\n--- app log ---\n"
+                                  f"{log_path.read_text()[-4000:]}")
+                if FRAME_MARKER in log_path.read_text():
+                    break
+                time.sleep(0.5)
+            else:
+                print(f"  note: mpv never reported a frame within {FRAME_TIMEOUT_S}s; "
+                      "screenshotting anyway so the checks can report what is on screen")
+            # Let the frame actually reach the screen.
+            time.sleep(2)
 
             if not screenshot(shot):
                 return None, "failed to capture the screen with xwd"

@@ -62,8 +62,11 @@ jobs:
 
   # The real proof: render an asymmetric clip under the webview on a headless X server and check
   # the resulting pixels.
+  # Pinned to the release the Linux backend was actually verified on. ubuntu-22.04 ships
+  # libmpv 1.x and Mesa 23, which adds variables this test is not trying to cover; the build
+  # matrix above still exercises the older toolchain.
   e2e-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

@@ -7,11 +7,19 @@ fn test_file() -> Option<String> {
     std::env::var("MPV_TEST_FILE").ok()
 }
 
+/// Lets the end-to-end test tell "the frontend never ran" apart from "the app never started",
+/// which is otherwise invisible: both look like an empty log.
+#[tauri::command]
+fn frontend_ready(stage: String) {
+    log::info!("frontend: {stage}");
+}
+
 fn main() {
     env_logger_init();
+    log::info!("app starting");
     tauri::Builder::default()
         .plugin(tauri_plugin_mpv::init())
-        .invoke_handler(tauri::generate_handler![test_file])
+        .invoke_handler(tauri::generate_handler![test_file, frontend_ready])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

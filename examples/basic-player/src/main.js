@@ -11,6 +11,8 @@ function fail(message) {
 }
 
 async function main() {
+  await invoke('frontend_ready', { stage: 'script running' }).catch(() => {})
+
   let video
   try {
     video = await MpvVideo.create({
@@ -23,8 +25,10 @@ async function main() {
     })
   } catch (e) {
     fail(`${e.kind ?? 'Error'}: ${e.message ?? e}`)
+    await invoke('frontend_ready', { stage: `mpv init failed: ${e.message ?? e}` }).catch(() => {})
     return
   }
+  await invoke('frontend_ready', { stage: 'mpv initialised' }).catch(() => {})
 
   // Expose for the end-to-end test to poke at.
   window.__mpvVideo = video
@@ -54,4 +58,6 @@ async function main() {
   }
 }
 
-main()
+main().catch((e) =>
+  invoke('frontend_ready', { stage: `unhandled error: ${e}` }).catch(() => {}),
+)

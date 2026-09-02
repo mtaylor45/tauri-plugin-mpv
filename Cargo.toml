@@ -1,0 +1,47 @@
+[workspace]
+members = ["examples/basic-player/src-tauri"]
+
+[package]
+name = "tauri-plugin-mpv"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77.2"
+description = "Composite a real mpv video surface beneath a transparent Tauri webview"
+authors = ["tauri-plugin-mpv contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mtaylor45/tauri-plugin-mpv"
+readme = "README.md"
+keywords = ["tauri", "plugin", "mpv", "video", "player"]
+categories = ["gui", "multimedia"]
+links = "tauri-plugin-mpv"
+# TODO(publish-name): `tauri-plugin-mpv` is taken on crates.io by nini22P.
+# Settle the published name before the first release, then drop `publish = false`.
+publish = false
+
+[dependencies]
+tauri = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+libloading = "0.8"
+log = "0.4"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+glib = "0.18"
+webkit2gtk = "2.0"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_OpenGL",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dev-dependencies]
+serde_json = "1"

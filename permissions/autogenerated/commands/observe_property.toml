@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-observe-property"
+description = "Enables the observe_property command without any pre-configured scope."
+commands.allow = ["observe_property"]
+
+[[permission]]
+identifier = "deny-observe-property"
+description = "Denies the observe_property command without any pre-configured scope."
+commands.deny = ["observe_property"]

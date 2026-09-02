@@ -13,6 +13,52 @@ await video.play()
 video.ontimeupdate = () => console.log(video.currentTime, '/', video.duration)
 ```
 
+## What this is, in plain terms
+
+**The problem.** Plenty of desktop apps are built with web technology — HTML, CSS and JavaScript
+inside a native shell. That is a pleasant way to build an interface, but it carries a hidden
+limit: the browser engine inside the app can only play the video formats *it* happens to support.
+Hand it a file from a real media collection — an MKV with H.265 video, or an unusual audio track —
+and it will often simply refuse. Which formats work varies by platform and even by machine.
+
+The usual ways around that are both unpleasant:
+
+- **Convert the video as it plays** (transcoding). It works, but it occupies a CPU core or
+  several, drains laptop batteries, adds a pause before playback starts, and throws away some
+  quality. Every time the viewer skips forward, the cost is paid again.
+- **Re-encode the whole library up front** into something the browser accepts, which costs hours
+  of processing and a second copy of everything.
+
+**What this does.** It lets the app hand playback to [mpv](https://mpv.io) — a mature video player
+that reads essentially any format and uses the computer's dedicated video-decoding chip — while
+the interface stays ordinary HTML.
+
+The catch is that mpv does not draw into a web page. It talks to the graphics card directly. So
+this plugin places mpv's picture in the window *underneath* the web page, makes the page
+see-through where the video belongs, and keeps the two aligned as the layout moves around. The
+effect is a video that appears to sit inside the page, with your buttons, subtitles, menus and
+overlays drawn on top of it as normal HTML.
+
+From the application's point of view, very little changes. `MpvVideo` behaves like the `<video>`
+element the code already uses — `play()`, `pause()`, `currentTime`, the usual events — so swapping
+the browser's decoder for mpv's is close to a one-line change rather than a rewrite.
+
+**Where this is useful.**
+
+- **Desktop clients for a home media server.** Play whatever is on the disk, at original quality,
+  without a server heating up to convert it first. This is the case the plugin was written for.
+- **Tools with a substantial interface over video** — review and annotation apps, editors,
+  monitoring dashboards — where you want a real player's format support and seeking behaviour but
+  would much rather build the surrounding UI in HTML.
+- **Kiosks and digital signage**, where full-screen video sits under live HTML overlays on
+  hardware with no CPU to spare.
+- **Older or low-powered machines**, where using the video-decoding hardware is the difference
+  between smooth playback and a slideshow.
+
+**What it is not.** It is not a video player in its own right, and it is not a browser trick: it
+needs a native Tauri app and mpv present on the machine. If the formats you care about already
+play in a browser, a plain `<video>` element is simpler and you should use that instead.
+
 ## Why another mpv plugin
 
 Two mpv plugins for Tauri already exist ([`tauri-plugin-mpv`][n1] and [`tauri-plugin-libmpv`][n2],

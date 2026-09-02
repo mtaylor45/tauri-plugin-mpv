@@ -8,7 +8,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import type { UnlistenFn } from '@tauri-apps/api/event'
 
-export const EVENT_NAME = 'mpv:event'
+export const EVENT_NAME = 'mpv-surface:event'
 
 export interface MpvConfig {
   /** mpv options applied before initialization, e.g. `{ hwdec: 'auto-safe' }`. */
@@ -64,39 +64,39 @@ export interface MpvError {
 }
 
 export async function init(config?: MpvConfig): Promise<void> {
-  await invoke('plugin:mpv|init', { config })
+  await invoke('plugin:mpv-surface|init', { config })
 }
 
 export async function destroy(): Promise<void> {
-  await invoke('plugin:mpv|destroy')
+  await invoke('plugin:mpv-surface|destroy')
 }
 
 export async function command(args: unknown[]): Promise<unknown> {
-  return invoke('plugin:mpv|command', { args })
+  return invoke('plugin:mpv-surface|command', { args })
 }
 
 export async function setProperty(name: string, value: unknown): Promise<void> {
-  await invoke('plugin:mpv|set_property', { name, value })
+  await invoke('plugin:mpv-surface|set_property', { name, value })
 }
 
 export async function getProperty<T = unknown>(name: string): Promise<T> {
-  return invoke<T>('plugin:mpv|get_property', { name })
+  return invoke<T>('plugin:mpv-surface|get_property', { name })
 }
 
 export async function observeProperty(name: string): Promise<void> {
-  await invoke('plugin:mpv|observe_property', { name })
+  await invoke('plugin:mpv-surface|observe_property', { name })
 }
 
 export async function unobserveProperty(name: string): Promise<void> {
-  await invoke('plugin:mpv|unobserve_property', { name })
+  await invoke('plugin:mpv-surface|unobserve_property', { name })
 }
 
 export async function setVideoRect(rect: VideoRect): Promise<void> {
-  await invoke('plugin:mpv|set_video_rect', { rect })
+  await invoke('plugin:mpv-surface|set_video_rect', { rect })
 }
 
 export async function setSurfaceVisible(visible: boolean): Promise<void> {
-  await invoke('plugin:mpv|set_surface_visible', { visible })
+  await invoke('plugin:mpv-surface|set_surface_visible', { visible })
 }
 
 export async function onMpvEvent(handler: (event: MpvEvent) => void): Promise<UnlistenFn> {

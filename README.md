@@ -1,10 +1,10 @@
-# tauri-plugin-mpv
+# tauri-plugin-mpv-surface
 
 Composite a real **mpv** video surface *beneath* a transparent Tauri v2 webview, so your HTML UI
 draws over live, hardware-decoded video with alpha.
 
 ```ts
-import { MpvVideo } from 'tauri-plugin-mpv-api'
+import { MpvVideo } from 'tauri-plugin-mpv-surface-api'
 
 // Looks and behaves like an <video> element.
 const video = await MpvVideo.create({ target: document.getElementById('player') })
@@ -12,6 +12,52 @@ video.src = 'file:///movies/big-buck-bunny.mkv'
 await video.play()
 video.ontimeupdate = () => console.log(video.currentTime, '/', video.duration)
 ```
+
+## What this is, in plain terms
+
+**The problem.** Plenty of desktop apps are built with web technology — HTML, CSS and JavaScript
+inside a native shell. That is a pleasant way to build an interface, but it carries a hidden
+limit: the browser engine inside the app can only play the video formats *it* happens to support.
+Hand it a file from a real media collection — an MKV with H.265 video, or an unusual audio track —
+and it will often simply refuse. Which formats work varies by platform and even by machine.
+
+The usual ways around that are both unpleasant:
+
+- **Convert the video as it plays** (transcoding). It works, but it occupies a CPU core or
+  several, drains laptop batteries, adds a pause before playback starts, and throws away some
+  quality. Every time the viewer skips forward, the cost is paid again.
+- **Re-encode the whole library up front** into something the browser accepts, which costs hours
+  of processing and a second copy of everything.
+
+**What this does.** It lets the app hand playback to [mpv](https://mpv.io) — a mature video player
+that reads essentially any format and uses the computer's dedicated video-decoding chip — while
+the interface stays ordinary HTML.
+
+The catch is that mpv does not draw into a web page. It talks to the graphics card directly. So
+this plugin places mpv's picture in the window *underneath* the web page, makes the page
+see-through where the video belongs, and keeps the two aligned as the layout moves around. The
+effect is a video that appears to sit inside the page, with your buttons, subtitles, menus and
+overlays drawn on top of it as normal HTML.
+
+From the application's point of view, very little changes. `MpvVideo` behaves like the `<video>`
+element the code already uses — `play()`, `pause()`, `currentTime`, the usual events — so swapping
+the browser's decoder for mpv's is close to a one-line change rather than a rewrite.
+
+**Where this is useful.**
+
+- **Desktop clients for a home media server.** Play whatever is on the disk, at original quality,
+  without a server heating up to convert it first. This is the case the plugin was written for.
+- **Tools with a substantial interface over video** — review and annotation apps, editors,
+  monitoring dashboards — where you want a real player's format support and seeking behaviour but
+  would much rather build the surrounding UI in HTML.
+- **Kiosks and digital signage**, where full-screen video sits under live HTML overlays on
+  hardware with no CPU to spare.
+- **Older or low-powered machines**, where using the video-decoding hardware is the difference
+  between smooth playback and a slideshow.
+
+**What it is not.** It is not a video player in its own right, and it is not a browser trick: it
+needs a native Tauri app and mpv present on the machine. If the formats you care about already
+play in a browser, a plain `<video>` element is simpler and you should use that instead.
 
 ## Why another mpv plugin
 
@@ -65,19 +111,19 @@ Set `TAURI_PLUGIN_MPV_LIBMPV_PATH` to point at a specific library if auto-discov
 ## Install
 
 ```bash
-cargo add tauri-plugin-mpv     # see "Naming" below
-npm install tauri-plugin-mpv-api
+cargo add tauri-plugin-mpv-surface
+npm install tauri-plugin-mpv-surface-api
 ```
 
 ```rust
 tauri::Builder::default()
-    .plugin(tauri_plugin_mpv::init())
+    .plugin(tauri_plugin_mpv_surface::init())
 ```
 
 Add the permission to your capability file:
 
 ```json
-{ "permissions": ["mpv:default"] }
+{ "permissions": ["mpv-surface:default"] }
 ```
 
 ### Window transparency
@@ -123,7 +169,7 @@ your chrome — control bars, panels — explicitly.
 Everything mpv can do that `<video>` has no vocabulary for:
 
 ```ts
-import { command, setProperty, getProperty, observeProperty, onMpvEvent } from 'tauri-plugin-mpv-api'
+import { command, setProperty, getProperty, observeProperty, onMpvEvent } from 'tauri-plugin-mpv-surface-api'
 
 await command(['loadfile', url, 'replace'])
 await setProperty('sub-visibility', false)
@@ -192,8 +238,15 @@ webview paints, that the video surface occupies the requested rect, that an HTML
 
 ## Naming
 
-`tauri-plugin-mpv` and `tauri-plugin-libmpv` are both taken on crates.io. This crate is
-`publish = false` until a published name is settled; see the `TODO(publish-name)` in `Cargo.toml`.
+Published as **`tauri-plugin-mpv-surface`** (npm: `tauri-plugin-mpv-surface-api`), because
+`tauri-plugin-mpv` and `tauri-plugin-libmpv` are both taken on crates.io by the plugins this one
+is an alternative to. The suffix names the difference: a real compositing surface behind the
+webview rather than an embedded mpv window.
+
+The Tauri plugin identifier is `mpv-surface` to match, so permissions read `mpv-surface:default`
+and commands are invoked as `plugin:mpv-surface|…`. **Migrating from `tauri-plugin-mpv`** means
+renaming those two things along with the import; the JS API deliberately keeps the same
+`command` / `setProperty` / `getProperty` / `observeProperty` vocabulary.
 
 ## License
 

@@ -27,7 +27,7 @@ render surface, and positioning it beneath the webview.
 <tr>
 <td>
 
-`mpv:allow-command`
+`mpv-surface:allow-command`
 
 </td>
 <td>
@@ -40,7 +40,7 @@ Enables the command command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-command`
+`mpv-surface:deny-command`
 
 </td>
 <td>
@@ -53,7 +53,7 @@ Denies the command command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-destroy`
+`mpv-surface:allow-destroy`
 
 </td>
 <td>
@@ -66,7 +66,7 @@ Enables the destroy command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-destroy`
+`mpv-surface:deny-destroy`
 
 </td>
 <td>
@@ -79,7 +79,7 @@ Denies the destroy command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-get-property`
+`mpv-surface:allow-get-property`
 
 </td>
 <td>
@@ -92,7 +92,7 @@ Enables the get_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-get-property`
+`mpv-surface:deny-get-property`
 
 </td>
 <td>
@@ -105,7 +105,7 @@ Denies the get_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-init`
+`mpv-surface:allow-init`
 
 </td>
 <td>
@@ -118,7 +118,7 @@ Enables the init command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-init`
+`mpv-surface:deny-init`
 
 </td>
 <td>
@@ -131,7 +131,7 @@ Denies the init command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-observe-property`
+`mpv-surface:allow-observe-property`
 
 </td>
 <td>
@@ -144,7 +144,7 @@ Enables the observe_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-observe-property`
+`mpv-surface:deny-observe-property`
 
 </td>
 <td>
@@ -157,7 +157,7 @@ Denies the observe_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-set-property`
+`mpv-surface:allow-set-property`
 
 </td>
 <td>
@@ -170,7 +170,7 @@ Enables the set_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-set-property`
+`mpv-surface:deny-set-property`
 
 </td>
 <td>
@@ -183,7 +183,7 @@ Denies the set_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-set-surface-visible`
+`mpv-surface:allow-set-surface-visible`
 
 </td>
 <td>
@@ -196,7 +196,7 @@ Enables the set_surface_visible command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-set-surface-visible`
+`mpv-surface:deny-set-surface-visible`
 
 </td>
 <td>
@@ -209,7 +209,7 @@ Denies the set_surface_visible command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-set-video-rect`
+`mpv-surface:allow-set-video-rect`
 
 </td>
 <td>
@@ -222,7 +222,7 @@ Enables the set_video_rect command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-set-video-rect`
+`mpv-surface:deny-set-video-rect`
 
 </td>
 <td>
@@ -235,7 +235,7 @@ Denies the set_video_rect command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:allow-unobserve-property`
+`mpv-surface:allow-unobserve-property`
 
 </td>
 <td>
@@ -248,7 +248,7 @@ Enables the unobserve_property command without any pre-configured scope.
 <tr>
 <td>
 
-`mpv:deny-unobserve-property`
+`mpv-surface:deny-unobserve-property`
 
 </td>
 <td>

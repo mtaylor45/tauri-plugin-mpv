@@ -18,7 +18,7 @@ fn main() {
     env_logger_init();
     log::info!("app starting");
     tauri::Builder::default()
-        .plugin(tauri_plugin_mpv::init())
+        .plugin(tauri_plugin_mpv_surface::init())
         .invoke_handler(tauri::generate_handler![test_file, frontend_ready])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -16,7 +16,9 @@
   },
   "files": [
     "dist-js",
-    "README.md"
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "scripts": {
     "build": "rollup -c",
